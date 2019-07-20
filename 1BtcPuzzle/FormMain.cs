@@ -98,7 +98,7 @@ namespace OneBTCPuzzle
 
             DateTime dtEnd = DateTime.Now;
 
-            StatusMessage(String.Format("Затрачено {0} sec", (dtEnd - dtStart).TotalMilliseconds / 1000));
+            StatusMessage(String.Format("Spent {0} sec", (dtEnd - dtStart).TotalMilliseconds / 1000));
         }
 
         private void EnableControls(bool enable)
@@ -353,7 +353,9 @@ namespace OneBTCPuzzle
             int step = 1000;
             try
             {
+                panelCenter.Enabled = false;
                 int pick = (int) numericUpDownPick.Value;
+                bool startLowerCase = checkBoxStartLowerCase.Checked;
 
                 string searchFor = textBoxFindAddress.Text.Trim();
                 //Получить пермутации
@@ -374,7 +376,11 @@ namespace OneBTCPuzzle
                 long max = perm.RowCount;
                 StatusMessage("Total permutations: " + max);
 
-                StartProcess(true, (int)max, step);
+                int prbarMax = Int32.MaxValue;
+                if (max < Int32.MaxValue)
+                    prbarMax = (int)max;
+
+                StartProcess(true, prbarMax, step);
 
                 foreach (var row in perm.GetRows())
                 {
@@ -382,7 +388,14 @@ namespace OneBTCPuzzle
                     temp = String.Join("", Permutation.Permute(row, things));
                     if (temp.Length == 32)
                     {
-                        var addr = GetAddressUC(temp);
+
+                        if (startLowerCase) //первый симол в нижнем
+                        {
+                            temp = char.ToLower(temp[0]) + temp.Substring(1);
+
+                        }
+
+                        (string, string) addr = GetAddressUC(temp);
                         if (addr.Item1 == searchFor || addr.Item2 == searchFor)
                         {
                             string found= "Found " + addr + " from " + temp;
@@ -390,6 +403,7 @@ namespace OneBTCPuzzle
                             MessageBox.Show(found);
                             break;
                         }
+
                     }
 
                     if (count % step == 0)
@@ -418,7 +432,8 @@ namespace OneBTCPuzzle
                     StatusMessage("Interrupted by user on step " + count);
                 }
                 FinallyQueryWork(dtStart);
-
+                labelCount.Text = "";
+                panelCenter.Enabled = true;
             }
 
         }
